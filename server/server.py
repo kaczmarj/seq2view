@@ -1,8 +1,5 @@
 """
 Flask application to serve data in JSON API. Only GET requests are implemented.
-
-TODO: extend this slowly into an hdf5 server. The days here are like labels, and the
-    todo items are features.
 """
 
 import math
