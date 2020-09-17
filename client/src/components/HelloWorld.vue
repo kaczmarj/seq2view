@@ -66,24 +66,29 @@ export default class HelloWorld extends Vue {
       );
       const data = response.data.data.feature;
 
-      console.log(data);
+      d3.select("#line > svg").remove();
 
-      d3.select("#line svg").remove();
+      const width = 800,
+        height = 200,
+        margin = { top: 30, right: 30, bottom: 30, left: 30 };
+
       const svg = d3
         .select("#line")
         .append("svg")
-        .attr("width", 800)
-        .attr("height", 200);
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       // Add x-axis.
       const x = d3
         .scaleLinear()
         // TODO: how to prevent typescript from thinking value can be undefined?
         .domain(d3.extent(data, d => d.x) as [number, number])
-        .range([0, +svg.attr("width")]);
+        .range([0, width]);
       svg
         .append("g")
-        .attr("transform", `translate(0, ${svg.attr("height")})`)
+        .attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(x));
 
       // Add y-axis
@@ -91,7 +96,7 @@ export default class HelloWorld extends Vue {
         .scaleLinear()
         // TODO: how to prevent typescript from thinking value can be undefined?
         .domain(d3.extent(data, d => d.y) as [number, number])
-        .range([+svg.attr("height"), 0]);
+        .range([height, 0]);
       svg.append("g").call(d3.axisLeft(y));
 
       svg
@@ -99,7 +104,6 @@ export default class HelloWorld extends Vue {
         .datum(data)
         .attr("stroke", "black")
         .attr("fill", "none")
-
         .attr(
           "d",
           d3
