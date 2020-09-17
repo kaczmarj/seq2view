@@ -12,13 +12,15 @@
       <option selected disabled hidden>Please choose one</option>
       <option v-for="label in labels" v-bind:key="label.value" v-bind:value="label">{{ label.name }}</option>
     </select>
+
+    <div id="line"></div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Vue, Watch } from "vue-property-decorator";
 import axios from "axios";
-// import * as d3 from "d3";
+import * as d3 from "d3";
 
 axios.defaults.withCredentials = false;
 
@@ -54,37 +56,58 @@ export default class HelloWorld extends Vue {
     };
   }
 
-  async plot() {
+  @Watch("selectedLabel")
+  async plot(label: Label) {
+    console.log(`Plotting data for label '${label.name}'`);
     // TODO: check for empty selectedLabel.
     try {
       const response = await axios.get<FeatureResponse>(
-        `http://127.0.0.1:5000/api/feature?label=${this.$data.selectedLabel.value}`
+        `http://127.0.0.1:5000/api/feature?label=${label.value}`
       );
       const data = response.data.data.feature;
 
-      // create svg element:
-      // var svg = d3
-      //   .select("#line")
-      //   .append("svg")
-      //   .attr("width", 800)
-      //   .attr("height", 200);
+      console.log(data);
 
-      // // prepare a helper function
-      // var lineFunc = d3
-      //   .line()
-      //   .x(function(d) {
-      //     return d.x;
-      //   })
-      //   .y(function(d) {
-      //     return d.y;
-      //   });
+      d3.select("#line svg").remove();
+      const svg = d3
+        .select("#line")
+        .append("svg")
+        .attr("width", 800)
+        .attr("height", 200);
 
-      // // Add the path using this helper function
-      // svg
-      //   .append("path")
-      //   .attr("d", lineFunc(data))
-      //   .attr("stroke", "black")
-      //   .attr("fill", "none");
+      // Add x-axis.
+      const x = d3
+        .scaleLinear()
+        // TODO: how to prevent typescript from thinking value can be undefined?
+        .domain(d3.extent(data, d => d.x) as [number, number])
+        .range([0, +svg.attr("width")]);
+      svg
+        .append("g")
+        .attr("transform", `translate(0, ${svg.attr("height")})`)
+        .call(d3.axisBottom(x));
+
+      // Add y-axis
+      const y = d3
+        .scaleLinear()
+        // TODO: how to prevent typescript from thinking value can be undefined?
+        .domain(d3.extent(data, d => d.y) as [number, number])
+        .range([+svg.attr("height"), 0]);
+      svg.append("g").call(d3.axisLeft(y));
+
+      svg
+        .append("path")
+        .datum(data)
+        .attr("stroke", "black")
+        .attr("fill", "none")
+
+        .attr(
+          "d",
+          d3
+            .line<FeaturePoint>()
+            .x(d => x(d.x))
+            .y(d => y(d.y))
+            .curve(d3.curveBasis) as any // TODO: figure out how to avoid `as any`.
+        );
     } catch (error) {
       console.log(error);
     }
