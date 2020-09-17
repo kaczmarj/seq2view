@@ -9,14 +9,13 @@ This project utilizes a server-client archicture. The server provides data in JS
 ## Installation
 
 1. Clone this repository
-1. Install server components (instructions use virtual environment)
-    - Create virtual environment and install dependencies:
-        ```
-        cd server
-        python -m venv venv
-        ./venv/bin/python -m pip install --no-cache-dir -U pip
-        ./venv/bin/python -m pip install --no-cache-dir -r requirements.txt
-        ```
+1. Install server components (recommended to use a virtual environment)
+    ```
+    cd server
+    python -m venv venv
+    ./venv/bin/python -m pip install --no-cache-dir -U pip
+    ./venv/bin/python -m pip install --no-cache-dir -r requirements.txt
+    ```
 1. Install client components
     ```
     cd client
