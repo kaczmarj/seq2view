@@ -22,12 +22,12 @@ Browser-based visualization of data.
 
 Instructions below are for development purposes only. **Not for production**.
 
-1. Run development server
+1. Run development server in one terminal
     ```
     FLASK_APP=server/server.py FLASK_ENV=development PYTHONDONTWRITEBYTECODE=1 \
         ./server/venv/bin/flask run
     ```
-1. Run client
+1. Run client in another terminal
     ```
     npm run --prefix=client serve
     ```
