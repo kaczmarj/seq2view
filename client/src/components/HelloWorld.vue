@@ -18,6 +18,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import axios from "axios";
+// import * as d3 from "d3";
 
 axios.defaults.withCredentials = false;
 
@@ -48,8 +49,8 @@ export default class HelloWorld extends Vue {
   data() {
     return {
       labels: [] as Label[],
-      selectedLabel: {},
-      plottingData: [] as { value: number; index: number }[]
+      selectedLabel: {} as Label
+      // plottingData: [] as FeaturePoint[]
     };
   }
 
@@ -57,9 +58,33 @@ export default class HelloWorld extends Vue {
     // TODO: check for empty selectedLabel.
     try {
       const response = await axios.get<FeatureResponse>(
-        `http://127.0.0.1:5000/api/todo?day=${this.$data.selectedLabel}`
+        `http://127.0.0.1:5000/api/feature?label=${this.$data.selectedLabel.value}`
       );
-      this.$data.plottingData = response.data.data.feature;
+      const data = response.data.data.feature;
+
+      // create svg element:
+      // var svg = d3
+      //   .select("#line")
+      //   .append("svg")
+      //   .attr("width", 800)
+      //   .attr("height", 200);
+
+      // // prepare a helper function
+      // var lineFunc = d3
+      //   .line()
+      //   .x(function(d) {
+      //     return d.x;
+      //   })
+      //   .y(function(d) {
+      //     return d.y;
+      //   });
+
+      // // Add the path using this helper function
+      // svg
+      //   .append("path")
+      //   .attr("d", lineFunc(data))
+      //   .attr("stroke", "black")
+      //   .attr("fill", "none");
     } catch (error) {
       console.log(error);
     }
