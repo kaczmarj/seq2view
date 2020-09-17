@@ -2,21 +2,17 @@
 
 Browser-based visualization of data.
 
-## Architecture
-
-This project utilizes a server-client archicture. The server provides data in JSON format and is implemented using Python and Flask. The client provides the browser-based visualization and fetches data from the server. VueJS, D3, and Axios help make this happen.
-
 ## Installation
 
 1. Clone this repository
-1. Install server components (recommended to use a virtual environment)
+1. Install server dependencies (recommended to use a virtual environment)
     ```
     cd server
     python -m venv venv
     ./venv/bin/python -m pip install --no-cache-dir -U pip
     ./venv/bin/python -m pip install --no-cache-dir -r requirements.txt
     ```
-1. Install client components
+1. Install client dependencies
     ```
     cd client
     npm install
@@ -37,3 +33,7 @@ Instructions below are for development purposes only. **Not for production**.
     ```
 
 Open browser to http://localhost:8080/
+
+## Architecture
+
+This project utilizes a server-client archicture. The server provides data in JSON format and is implemented using Python and Flask. The client provides the browser-based visualization and fetches data from the server. VueJS, D3, and Axios help make this happen.
