@@ -17,7 +17,7 @@
       v-model="visit"
     />
     <br />
-    <input type="number" :max="shape.fields.visits" v-model="visit" />
+    <input type="number" min="0" :max="shape.fields.visits" v-model="visit" />
 
     <select v-model="selectedLabel">
       <option
@@ -99,13 +99,27 @@ export default class HelloWorld extends Vue {
     };
   }
 
-  @Watch("selectedLabel")
-  async plot(label: Label) {
-    console.log(`Plotting data for label '${label.name}'`);
+  get plottingHash(): [number, Label, "train" | "test"] {
+    return [this.$data.visit, this.$data.selectedLabel, this.$data.trainTest];
+  }
+
+  @Watch("plottingHash")
+  async plot(sequence: [number, Label, "train" | "test"]) {
+    const visit = sequence[0],
+      label = sequence[1],
+      trainTest = sequence[2];
+
+    if (label.name === "unknown") {
+      return;
+    }
+
+    console.log(
+      `plotting: trainTest='${trainTest}' visit='${visit}' label='${label.name}'`
+    );
     // TODO: check for empty selectedLabel.
     try {
       const response = await axios.get<FeatureResponse>(
-        `http://127.0.0.1:5000/api/feature?label=${label.value}`
+        `http://127.0.0.1:5000/api/feature?t=${trainTest}&v=${visit}&i=${label.value}`
       );
       const data = response.data.data.feature;
 
