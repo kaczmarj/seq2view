@@ -133,7 +133,7 @@ export default class HelloWorld extends Vue {
       visit = sequence[2],
       label = sequence[3];
 
-    if (label.name === "unknown") {
+    if (file === "" || label.name === "unknown") {
       return;
     }
 
