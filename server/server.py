@@ -20,6 +20,11 @@ flask_cors.CORS(app)  # TODO: remove for production. Enable CORS during developm
 # Attempt to mock having filepaths stored somewhere and referenced in API.
 _datasets = {"0001": Path(__file__).parent / "processed_ohdsi_sequences.h5"}
 
+@app.route("/api/files", methods=["GET"])
+def get_files():
+    return  {
+        "data": {"files": list(_datasets.keys())}
+}
 
 @app.route("/api/labels", methods=["GET"])
 def get_labels():
@@ -37,7 +42,17 @@ def get_labels():
 
 @app.route("/api/features/shape", methods=["GET"])
 def get_shape():
-    filepath = _datasets["0001"]
+    file_id = flask.request.args.get("f", default="0001", type=str)
+    subset = flask.request.args.get("s", default="processed", type=str)
+    train_test = flask.request.args.get("t", default="train", type=str)
+
+    try:
+        filepath = _datasets[file_id]
+    except KeyError:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "dataset not found"}
+        }
     dataset = HDF5Dataset(filepath)
     # subset="processed", train_test="train"
     shape = dataset.shape()
@@ -57,20 +72,41 @@ def get_shape():
 
 @app.route("/api/feature", methods=["GET"])
 def get_feature():
-    feature_idx = flask.request.args.get("label", default=None, type=int)
+    file_id = flask.request.args.get("f", default="0001", type=str)
+    subset = flask.request.args.get("s", default="processed", type=str)
+    train_test = flask.request.args.get("t", default=None, type=str)
+    visit = flask.request.args.get("v", default=None, type=int)
+    feature_idx = flask.request.args.get("i", default=None, type=int)
+
+    try:
+        filepath = _datasets[file_id]
+    except KeyError:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "dataset not found"}
+        }
+    if visit is None:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "missing required argument 'v' for visit"},
+        }
+    if feature_idx is None:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "missing required argument 'i' for feature index"},
+        }
+    if train_test is None:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "missing required argument 't' for train/test"},
+        }
 
     filepath = _datasets["0001"]
     dataset = HDF5Dataset(filepath)
 
-    if feature_idx is None:
-        return {
-            "status": STATUS_FAIL,
-            "data": {"label": "missing required argument 'label'"},
-        }
-
     try:
         x, y = dataset.feature(
-            subset="processed", train_test="train", visit=10, feature=feature_idx
+            subset="processed", train_test=train_test, visit=visit, feature=feature_idx
         )
         feature_labels = dataset.human_readable_labels()
         human_readable_label = feature_labels[feature_idx]
@@ -81,7 +117,7 @@ def get_feature():
                 "label": {"value": feature_idx, "name": human_readable_label},
             },
         }
-    except ValueError as err:
+    except (KeyError, ValueError) as err:
         return {"status": STATUS_FAIL, "data": {"error": {"message": str(err)}}}
 
 
