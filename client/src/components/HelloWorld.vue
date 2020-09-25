@@ -2,6 +2,15 @@
   <div class="hello">
     <h1>{{ message }}</h1>
 
+    File:
+    <select v-model="selectedFile">
+      <option v-for="file in files" v-bind:key="file" v-bind:value="file">{{
+        file
+      }}</option>
+    </select>
+
+    <br />
+
     <input type="radio" id="train" value="train" v-model="trainTest" />
     <label for="train">Train</label>
     <input type="radio" id="test" value="test" v-model="trainTest" />
@@ -41,6 +50,11 @@ axios.defaults.withCredentials = false;
 
 Vue.config.productionTip = false;
 
+interface FileResponse {
+  data: { files: string[] };
+  status: string;
+}
+
 interface Label {
   value: number;
   name: string;
@@ -73,6 +87,8 @@ interface ShapeResponse {
 }
 
 interface Data {
+  files: string[];
+  selectedFile: string;
   labels: Label[];
   shape: Shape;
   selectedLabel: Label;
@@ -87,6 +103,8 @@ export default class HelloWorld extends Vue {
 
   data(): Data {
     return {
+      files: [],
+      selectedFile: "",
       labels: [],
       shape: {
         fields: { visits: 0, timepoints: 0, features: 0 },
@@ -99,27 +117,33 @@ export default class HelloWorld extends Vue {
     };
   }
 
-  get plottingHash(): [number, Label, "train" | "test"] {
-    return [this.$data.visit, this.$data.selectedLabel, this.$data.trainTest];
+  get plottingHash(): [string, "train" | "test", number, Label] {
+    return [
+      this.$data.selectedFile,
+      this.$data.trainTest,
+      this.$data.visit,
+      this.$data.selectedLabel
+    ];
   }
 
   @Watch("plottingHash")
-  async plot(sequence: [number, Label, "train" | "test"]) {
-    const visit = sequence[0],
-      label = sequence[1],
-      trainTest = sequence[2];
+  async plot(sequence: [string, "train" | "test", number, Label]) {
+    const file = sequence[0],
+      trainTest = sequence[1],
+      visit = sequence[2],
+      label = sequence[3];
 
     if (label.name === "unknown") {
       return;
     }
 
     console.log(
-      `plotting: trainTest='${trainTest}' visit='${visit}' label='${label.name}'`
+      `plotting: file='${file}' trainTest='${trainTest}' visit='${visit}' label='${label.name}'`
     );
     // TODO: check for empty selectedLabel.
     try {
       const response = await axios.get<FeatureResponse>(
-        `http://127.0.0.1:5000/api/feature?t=${trainTest}&v=${visit}&i=${label.value}`
+        `http://127.0.0.1:5000/api/feature?f=${file}&t=${trainTest}&v=${visit}&i=${label.value}`
       );
       const data = response.data.data.feature;
 
@@ -176,6 +200,11 @@ export default class HelloWorld extends Vue {
 
   async mounted() {
     try {
+      const fileResponse = await axios.get<FileResponse>(
+        "http://127.0.0.1:5000/api/files"
+      );
+      this.$data.files = fileResponse.data.data.files;
+
       const labelResponse = await axios.get<LabelResponse>(
         "http://127.0.0.1:5000/api/labels"
       );
