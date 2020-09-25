@@ -4,13 +4,29 @@
 
     <p>
       Selected label:
-      <span
-        v-if="typeof(selectedLabel.name) !== 'undefined'"
-      >{{ selectedLabel.name }} ({{ selectedLabel.value }})</span>
+      <span v-if="typeof selectedLabel.name !== 'undefined'"
+        >{{ selectedLabel.name }} ({{ selectedLabel.value }})</span
+      >
     </p>
+
+    <input type="radio" id="train" value="train" v-model="trainTest" />
+    <label for="train">Train</label>
+    <input type="radio" id="test" value="test" v-model="trainTest" />
+    <label for="test">Test</label>
+
+    <br />
+    Visit: <input type="range" min="0" max="100" step="1" v-model="visit" />
+    <br />
+    <input type="number" v-model="visit" />
+
     <select v-model="selectedLabel">
       <option selected disabled hidden>Please choose one</option>
-      <option v-for="label in labels" v-bind:key="label.value" v-bind:value="label">{{ label.name }}</option>
+      <option
+        v-for="label in labels"
+        v-bind:key="label.value"
+        v-bind:value="label"
+        >{{ label.name }}</option
+      >
     </select>
 
     <div id="line"></div>
@@ -51,7 +67,9 @@ export default class HelloWorld extends Vue {
   data() {
     return {
       labels: [] as Label[],
-      selectedLabel: {} as Label
+      selectedLabel: {} as Label,
+      trainTest: "train" as "train" | "test",
+      visit: 0
       // plottingData: [] as FeaturePoint[]
     };
   }
