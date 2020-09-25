@@ -36,4 +36,4 @@ Open browser to http://localhost:8080/
 
 ## Architecture
 
-This project utilizes a server-client archicture. The server provides data in JSON format and is implemented using Python and Flask. The client provides the browser-based visualization and fetches data from the server. VueJS, D3, and Axios help make this happen.
+This project utilizes a server-client archicture. The server provides data in JSON format and is implemented using Python, Flask, H5py, and NumPy. The client provides the browser-based visualization and fetches data from the server. VueJS, D3, and Axios help make this happen.
