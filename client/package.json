@@ -42,6 +42,11 @@
     "typescript": "~3.9.3",
     "vue-template-compiler": "^2.6.11"
   },
+  "babel": {
+    "presets": [
+      "@vue/cli-plugin-babel/preset"
+    ]
+  },
   "eslintConfig": {
     "root": true,
     "env": {
