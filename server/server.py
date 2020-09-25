@@ -2,15 +2,12 @@
 Flask application to serve data in JSON API. Only GET requests are implemented.
 """
 
-import math
 import os
 from pathlib import Path, PosixPath
-import random
 
 import flask
 import flask_cors
 import h5py
-import numpy as np
 
 # JSend spec https://github.com/omniti-labs/jsend
 STATUS_SUCCESS = "success"
@@ -21,9 +18,7 @@ app = flask.Flask(__name__)
 flask_cors.CORS(app)  # TODO: remove for production. Enable CORS during development.
 
 # Attempt to mock having filepaths stored somewhere and referenced in API.
-_datasets = {
-    "0001": Path(__file__).parent / "processed_ohdsi_sequences.h5"
-}
+_datasets = {"0001": Path(__file__).parent / "processed_ohdsi_sequences.h5"}
 
 
 @app.route("/api/labels", methods=["GET"])
@@ -34,7 +29,9 @@ def get_labels():
     labels = dataset.human_readable_labels()
     return {
         "status": STATUS_SUCCESS,
-        "data": {"labels": [{"value": j, "name": label} for j, label in enumerate(labels)]},
+        "data": {
+            "labels": [{"value": j, "name": label} for j, label in enumerate(labels)]
+        },
     }
 
 
@@ -48,10 +45,13 @@ def get_feature():
     if feature_idx is None:
         return {
             "status": STATUS_FAIL,
-            "data": {"label": f"missing required argument 'label'"}}
+            "data": {"label": "missing required argument 'label'"},
+        }
 
     try:
-        x, y = dataset.feature(subset="processed", train_test="train", visit=10, feature=feature_idx)
+        x, y = dataset.feature(
+            subset="processed", train_test="train", visit=10, feature=feature_idx
+        )
         feature_labels = dataset.human_readable_labels()
         human_readable_label = feature_labels[feature_idx]
         return {
@@ -59,12 +59,10 @@ def get_feature():
             "data": {
                 "feature": [{"x": i, "y": j} for (i, j) in zip(x, y)],
                 "label": {"value": feature_idx, "name": human_readable_label},
-            }}
-    except ValueError as err:
-        return {
-            "status": STATUS_FAIL,
-            "data": {"error": {"message": str(err)}}
+            },
         }
+    except ValueError as err:
+        return {"status": STATUS_FAIL, "data": {"error": {"message": str(err)}}}
 
 
 class HDF5Dataset:
@@ -99,17 +97,22 @@ class HDF5Dataset:
             n_visits, n_timepoints, n_features = shape
             if visit is not None:
                 if visit < 0 or visit >= n_visits:
-                    raise ValueError(f"'visit' must be in [0, {n_visits}) but got {visit}")
+                    raise ValueError(
+                        f"'visit' must be in [0, {n_visits}) but got {visit}"
+                    )
             else:
                 visit = slice(None)
             if feature is not None:
                 if feature < 0 or feature >= n_features:
-                    raise ValueError(f"'feature' must be in [0, {n_features}) but got {feature}")
+                    raise ValueError(
+                        f"'feature' must be in [0, {n_features}) but got {feature}"
+                    )
             else:
                 feature = slice(None)
 
             x = f[str(node)][visit, :, -1]
             y = f[str(node)][visit, :, feature]
+
         # TODO: add this back in when using non-synthetic data.
         # Remove NaN values and samples where x and y are zero.
         # bad_indices = np.isnan(x) | np.isnan(y) | ((x == 0) & (y == 0))
