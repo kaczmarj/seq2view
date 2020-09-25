@@ -2,25 +2,24 @@
   <div class="hello">
     <h1>{{ message }}</h1>
 
-    <p>
-      Selected label:
-      <span v-if="typeof selectedLabel.name !== 'undefined'"
-        >{{ selectedLabel.name }} ({{ selectedLabel.value }})</span
-      >
-    </p>
-
     <input type="radio" id="train" value="train" v-model="trainTest" />
     <label for="train">Train</label>
     <input type="radio" id="test" value="test" v-model="trainTest" />
     <label for="test">Test</label>
 
     <br />
-    Visit: <input type="range" min="0" max="100" step="1" v-model="visit" />
+    Visit:
+    <input
+      type="range"
+      min="0"
+      :max="shape.fields.visits"
+      step="1"
+      v-model="visit"
+    />
     <br />
-    <input type="number" v-model="visit" />
+    <input type="number" :max="shape.fields.visits" v-model="visit" />
 
     <select v-model="selectedLabel">
-      <option selected disabled hidden>Please choose one</option>
       <option
         v-for="label in labels"
         v-bind:key="label.value"
@@ -29,7 +28,7 @@
       >
     </select>
 
-    <div id="line"></div>
+    <div id="linePlot"></div>
   </div>
 </template>
 
@@ -49,6 +48,7 @@ interface Label {
 
 interface LabelResponse {
   data: { labels: Label[] };
+  status: string;
 }
 
 interface FeaturePoint {
@@ -58,19 +58,44 @@ interface FeaturePoint {
 
 interface FeatureResponse {
   data: { label: Label; feature: FeaturePoint[] };
+  status: string;
+}
+
+interface Shape {
+  fields: { [key: string]: number };
+  rank: number;
+  shape: number[];
+}
+
+interface ShapeResponse {
+  data: Shape;
+  status: string;
+}
+
+interface Data {
+  labels: Label[];
+  shape: Shape;
+  selectedLabel: Label;
+  // TODO: add processed or raw.
+  trainTest: "train" | "test";
+  visit: number;
 }
 
 @Component
 export default class HelloWorld extends Vue {
-  message = "Example data component";
+  message = "Plotting component";
 
-  data() {
+  data(): Data {
     return {
-      labels: [] as Label[],
-      selectedLabel: {} as Label,
-      trainTest: "train" as "train" | "test",
+      labels: [],
+      shape: {
+        fields: { visits: 0, timepoints: 0, features: 0 },
+        shape: [0, 0, 0],
+        rank: 3
+      },
+      selectedLabel: { value: 0, name: "unknown" },
+      trainTest: "train",
       visit: 0
-      // plottingData: [] as FeaturePoint[]
     };
   }
 
@@ -84,14 +109,14 @@ export default class HelloWorld extends Vue {
       );
       const data = response.data.data.feature;
 
-      d3.select("#line > svg").remove();
+      d3.select("#linePlot > svg").remove();
 
       const width = 800,
         height = 200,
         margin = { top: 30, right: 30, bottom: 30, left: 30 };
 
       const svg = d3
-        .select("#line")
+        .select("#linePlot")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
@@ -137,10 +162,15 @@ export default class HelloWorld extends Vue {
 
   async mounted() {
     try {
-      const response = await axios.get<LabelResponse>(
+      const labelResponse = await axios.get<LabelResponse>(
         "http://127.0.0.1:5000/api/labels"
       );
-      this.$data.labels = response.data.data.labels;
+      this.$data.labels = labelResponse.data.data.labels;
+
+      const shapeResponse = await axios.get<ShapeResponse>(
+        "http://127.0.0.1:5000/api/features/shape"
+      );
+      this.$data.shape = shapeResponse.data.data;
     } catch (error) {
       console.log(error);
     }
