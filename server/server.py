@@ -35,6 +35,26 @@ def get_labels():
     }
 
 
+@app.route("/api/features/shape", methods=["GET"])
+def get_shape():
+    filepath = _datasets["0001"]
+    dataset = HDF5Dataset(filepath)
+    # subset="processed", train_test="train"
+    shape = dataset.shape()
+    if len(shape) != 3:
+        raise ValueError(f"Expected rank 3 but got {len(shape)}")
+    return {
+        "status": STATUS_SUCCESS,
+        "data": {
+            "shape": shape,
+            "rank": len(shape),
+            "fields": {
+            "visits": shape[0],
+            "timepoints": shape[1],
+            "features": shape[2],}
+        },
+    }
+
 @app.route("/api/feature", methods=["GET"])
 def get_feature():
     feature_idx = flask.request.args.get("label", default=None, type=int)
@@ -80,6 +100,11 @@ class HDF5Dataset:
         self._filepath = filepath
         # HDF5 node names are POSIX-like.
         self._root_node = PosixPath("/data")
+
+    def shape(self, subset="processed", train_test="train"):
+        node = self._root_node / subset / train_test / "sequence" / "core_array"
+        with h5py.File(self._filepath, mode="r") as f:
+            return f[str(node)].shape
 
     def human_readable_labels(self, subset="processed", train_test="train"):
         node = self._root_node / subset / train_test / "sequence" / "column_annotations"
