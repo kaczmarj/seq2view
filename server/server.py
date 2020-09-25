@@ -93,6 +93,7 @@ class HDF5Dataset:
         node = self._root_node / subset / train_test / "sequence" / "core_array"
         with h5py.File(self._filepath, mode="r") as f:
             shape = f[str(node)].shape
+            # Could use the := (walrus) operator here, but that requires python>=3.8.
             if len(shape) != 3:
                 raise ValueError(f"expected rank 3 array but got rank {len(shape)}")
             n_visits, n_timepoints, n_features = shape
