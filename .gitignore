@@ -2,6 +2,15 @@
 node_modules
 dist
 
+# Data
+*.h5
+*.hdf
+*.hdf5
+
+# Jupyter notebook
+.ipynb_checkpoints
+scratch*.ipynb
+
 # Server virtual environment
 server/venv
 # Old things...
