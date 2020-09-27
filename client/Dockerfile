@@ -6,6 +6,5 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.18.0-alpine as production-stage
-WORKDIR /opt/client
-COPY --from=build-stage /opt/client/dist .
+COPY --from=build-stage /opt/client/dist /opt/client
 COPY nginx.conf /etc/nginx/nginx.conf
