@@ -20,6 +20,18 @@ Browser-based visualization of data.
 
 ## Usage
 
+### Docker Compose
+
+If Docker Compose is available, run the following to start the client and server.
+
+```
+docker-compose up
+```
+
+Note: data are not mounted to the server.
+
+### Without Docker Compose
+
 Instructions below are for development purposes only. **Not for production**.
 
 1. Run development server in one terminal
