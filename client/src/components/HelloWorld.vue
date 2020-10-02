@@ -38,6 +38,7 @@
     </select>
 
     <div id="linePlot"></div>
+    <div id="heatmap"></div>
   </div>
 </template>
 
@@ -83,6 +84,18 @@ interface Shape {
 
 interface ShapeResponse {
   data: Shape;
+  status: string;
+}
+
+interface NonZeroFeaturePoint {
+  feature_id: number;
+  original_feature_id: number;
+  timepoint: number;
+  value: number;
+}
+
+interface NonZeroFeatureResponse {
+  data: NonZeroFeaturePoint[];
   status: string;
 }
 
@@ -193,6 +206,82 @@ export default class HelloWorld extends Vue {
             .y(d => y(d.y))
             .curve(d3.curveBasis) as any // TODO: figure out how to avoid `as any`.
         );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Watch("plottingHash")
+  async plotHeatmap(sequence: [string, "train" | "test", number, Label]) {
+    const file = sequence[0],
+      trainTest = sequence[1],
+      visit = sequence[2],
+      label = sequence[3];
+
+    if (file === "" || label.name === "unknown") {
+      return;
+    }
+
+    console.log(
+      `plotting heatmap: file='${file}' trainTest='${trainTest}' visit='${visit}'`
+    );
+
+    try {
+      const response = await axios.get<NonZeroFeatureResponse>(
+        `http://127.0.0.1:5000/api/nonzero_features?f=${file}&t=${trainTest}&v=${visit}`
+      );
+      const data = response.data.data;
+
+      d3.select("#heatmap > svg").remove();
+
+      const width = 800,
+        height = 400,
+        margin = { top: 30, right: 30, bottom: 30, left: 30 };
+
+      const svg = d3
+        .select("#heatmap")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Add x-axis (features)
+      const x = d3
+        .scaleBand()
+        .domain(Array.from(data, d => d.feature_id.toString()))
+        .range([0, width])
+        .padding(0.1);
+      svg
+        .append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      // Add y-axis (timepoints)
+      const y = d3
+        .scaleBand()
+        // TODO: how to prevent typescript from thinking value can be undefined?
+        .domain(Array.from(data, d => d.timepoint.toString()))
+        .range([height, 0])
+        .padding(0.1);
+      svg.append("g").call(d3.axisLeft(y));
+
+      const color = d3
+        .scaleLinear<string>()
+        .range(["black", "blue"])
+        .domain(d3.extent(data, d => d.value));
+
+      console.log(`extent: ${d3.extent(data, d => d.value)}`);
+
+      svg
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d.feature_id.toString()))
+        .attr("y", d => y(d.timepoint.toString()))
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .style("fill", d => color(d.value));
     } catch (error) {
       console.log(error);
     }
