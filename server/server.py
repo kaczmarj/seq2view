@@ -2,12 +2,15 @@
 Flask application to serve data in JSON API. Only GET requests are implemented.
 """
 
+import itertools
 import os
-from pathlib import Path, PosixPath
+from pathlib import Path
+from pathlib import PosixPath
 
 import flask
 import flask_cors
 import h5py
+import numpy as np
 
 # JSend spec https://github.com/omniti-labs/jsend
 STATUS_SUCCESS = "success"
@@ -121,6 +124,52 @@ def get_feature():
         return {"status": STATUS_FAIL, "data": {"error": {"message": str(err)}}}
 
 
+@app.route("/api/nonzero_features", methods=["GET"])
+def get_nonzero_features():
+    file_id = flask.request.args.get("f", default="0001", type=str)
+    subset = flask.request.args.get("s", default="processed", type=str)
+    train_test = flask.request.args.get("t", default=None, type=str)
+    visit = flask.request.args.get("v", default=None, type=int)
+    feature_idx = flask.request.args.get("i", default=None, type=int)
+
+    try:
+        filepath = _datasets[file_id]
+    except KeyError:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "dataset not found"}
+        }
+    if visit is None:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "missing required argument 'v' for visit"},
+        }
+    if train_test is None:
+        return {
+            "status": STATUS_FAIL,
+            "data": {"message": "missing required argument 't' for train/test"},
+        }
+
+    filepath = _datasets["0001"]
+    dataset = HDF5Dataset(filepath)
+
+    try:
+        nonzero_visit_data, original_feature_ids, labels_included = dataset.get_nonzero_visit_data(
+            subset="processed", train_test=train_test, visit=visit
+        )
+
+        data = []
+        for i, j in itertools.product(range(nonzero_visit_data.shape[0]), range(nonzero_visit_data.shape[1])):
+            d = {"timepoint": i, "feature_id": j, "original_feature_id": original_feature_ids[j], "value": nonzero_visit_data[i, j]}
+            data.append(d)
+        return {
+            "status": STATUS_SUCCESS,
+            "data": data
+        }
+    except (KeyError, ValueError) as err:
+        return {"status": STATUS_FAIL, "data": {"error": {"message": str(err)}}}
+
+
 class HDF5Dataset:
     """Object to interact with HDF5 file.
 
@@ -181,3 +230,17 @@ class HDF5Dataset:
         # y = y[~bad_indices].astype(float)
 
         return x.astype(float), y.astype(float)
+
+    def get_nonzero_visit_data(self, visit, subset="processed", train_test="train"):
+        """Return array of features and human-readable labels where the feature data is not 0.
+        """
+        _, visit_data = self.feature(visit=visit, subset=subset, train_test=train_test)
+        feature_mask = visit_data.any(axis=0)
+        nonzero_visit_data = visit_data[:, feature_mask]
+        original_feature_ids = np.argwhere(feature_mask).flatten().astype(float)
+        labels = np.asarray(self.human_readable_labels(subset=subset, train_test=train_test))
+        if feature_mask.shape[0] != labels.shape[0]:
+            m = "number of data points kept does not match number of human readable labels kept."
+            raise ValueError(m)
+        labels_included = labels[feature_mask]
+        return nonzero_visit_data, original_feature_ids, labels_included
