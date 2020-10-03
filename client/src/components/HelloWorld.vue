@@ -46,13 +46,41 @@
 import { Component, Vue, Watch } from "vue-property-decorator";
 import axios from "axios";
 import * as d3 from "d3";
+import { set } from "vue/types/umd";
 
 axios.defaults.withCredentials = false;
 
 Vue.config.productionTip = false;
 
-interface FileResponse {
-  data: { files: string[] };
+type KnownCollections = "raw" | "processed";
+type KnownSets = "train" | "test";
+
+// Response of /api/datasets
+interface DatasetsResponse {
+  data: { datasets: string[] };
+  status: string;
+}
+
+// Response of /api/datasets/<string:dataset>
+interface DatasetInfoResponse {
+  data: {
+    nodes: {
+      collections: { [key: string]: boolean };
+      sets: { [key: string]: { [key: string]: boolean } };
+    };
+  };
+  status: string;
+}
+
+interface Shape {
+  fields: { features: number; timepoints: number; visits: number };
+  rank: number;
+  shape: [number, number, number];
+}
+
+// Response of /api/datasets/<string:dataset>/<string:collection>/<string:set_>
+interface ShapeResponse {
+  data: Shape;
   status: string;
 }
 
@@ -61,8 +89,31 @@ interface Label {
   name: string;
 }
 
-interface LabelResponse {
+// Response of /api/datasets/<string:dataset>/<string:collection>/<string:set_>/labels
+interface LabelsResponse {
   data: { labels: Label[] };
+  status: string;
+}
+
+interface NonZeroVisitDatumFeature {
+  featureID: number;
+  originalFeatureID: number;
+  timepoint: number;
+  value: number;
+}
+
+interface NonZeroVisitDatumLabel {
+  name: string;
+  originalValue: number;
+  value: number;
+}
+
+// Response of "/api/datasets/<string:dataset>/<string:collection>/<string:set_>/<int:visit>
+interface NonZeroFeatureResponse {
+  data: {
+    features: NonZeroVisitDatumFeature[];
+    labels: NonZeroVisitDatumLabel[];
+  };
   status: string;
 }
 
@@ -71,42 +122,20 @@ interface FeaturePoint {
   y: number;
 }
 
+// Response of /api/datasets/<string:dataset>/<string:collection>/<string:set_>/<int:visit>/<int:feature>
 interface FeatureResponse {
   data: { label: Label; feature: FeaturePoint[] };
   status: string;
 }
 
-interface Shape {
-  fields: { [key: string]: number };
-  rank: number;
-  shape: number[];
-}
-
-interface ShapeResponse {
-  data: Shape;
-  status: string;
-}
-
-interface NonZeroFeaturePoint {
-  feature_id: number;
-  original_feature_id: number;
-  timepoint: number;
-  value: number;
-}
-
-interface NonZeroFeatureResponse {
-  data: NonZeroFeaturePoint[];
-  status: string;
-}
-
 interface Data {
-  files: string[];
-  selectedFile: string;
+  datasets: string[];
+  selectedDataset: string;
   labels: Label[];
   shape: Shape;
   selectedLabel: Label;
-  // TODO: add processed or raw.
-  trainTest: "train" | "test";
+  collection: KnownCollections;
+  set: KnownSets;
   visit: number;
 }
 
@@ -116,8 +145,8 @@ export default class HelloWorld extends Vue {
 
   data(): Data {
     return {
-      files: [],
-      selectedFile: "",
+      datasets: [],
+      selectedDataset: "",
       labels: [],
       shape: {
         fields: { visits: 0, timepoints: 0, features: 0 },
@@ -125,17 +154,19 @@ export default class HelloWorld extends Vue {
         rank: 3
       },
       selectedLabel: { value: 0, name: "unknown" },
-      trainTest: "train",
+      collection: "processed",
+      set: "train",
       visit: 0
     };
   }
 
-  get plottingHash(): [string, "train" | "test", number, Label] {
+  get plottingHash(): [string, KnownSets, number, Label] {
+    const data = this.$data as Data
     return [
-      this.$data.selectedFile,
-      this.$data.trainTest,
-      this.$data.visit,
-      this.$data.selectedLabel
+      data.selectedDataset,
+      data.set, 
+      data.visit,
+      data.selectedLabel
     ];
   }
 
@@ -289,10 +320,10 @@ export default class HelloWorld extends Vue {
 
   async mounted() {
     try {
-      const fileResponse = await axios.get<FileResponse>(
+      const fileResponse = await axios.get<DatasetsResponse>(
         "http://127.0.0.1:5000/api/files"
       );
-      this.$data.files = fileResponse.data.data.files;
+      this.$data.files = fileResponse.data.data.datasets;
 
       const labelResponse = await axios.get<LabelResponse>(
         "http://127.0.0.1:5000/api/labels"
