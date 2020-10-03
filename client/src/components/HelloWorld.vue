@@ -3,17 +3,20 @@
     <h1>{{ message }}</h1>
 
     File:
-    <select v-model="selectedFile">
-      <option v-for="file in files" v-bind:key="file" v-bind:value="file">{{
-        file
-      }}</option>
+    <select v-model="selectedDataset">
+      <option
+        v-for="dataset in datasets"
+        v-bind:key="dataset"
+        v-bind:value="dataset"
+        >{{ dataset }}</option
+      >
     </select>
 
     <br />
 
-    <input type="radio" id="train" value="train" v-model="trainTest" />
+    <input type="radio" id="train" value="train" v-model="set" />
     <label for="train">Train</label>
-    <input type="radio" id="test" value="test" v-model="trainTest" />
+    <input type="radio" id="test" value="test" v-model="set" />
     <label for="test">Test</label>
 
     <br />
@@ -27,6 +30,7 @@
     />
     <br />
     <input type="number" min="0" :max="shape.fields.visits" v-model="visit" />
+    <br />
 
     <select v-model="selectedLabel">
       <option
@@ -139,6 +143,8 @@ interface Data {
   visit: number;
 }
 
+type _PlottingHash = [string, KnownCollections, KnownSets, number, Label];
+
 @Component
 export default class HelloWorld extends Vue {
   message = "Plotting component";
@@ -160,34 +166,36 @@ export default class HelloWorld extends Vue {
     };
   }
 
-  get plottingHash(): [string, KnownSets, number, Label] {
-    const data = this.$data as Data
+  get plottingHash(): _PlottingHash {
+    const data = this.$data as Data;
     return [
       data.selectedDataset,
-      data.set, 
+      data.collection,
+      data.set,
       data.visit,
       data.selectedLabel
     ];
   }
 
   @Watch("plottingHash")
-  async plot(sequence: [string, "train" | "test", number, Label]) {
-    const file = sequence[0],
-      trainTest = sequence[1],
-      visit = sequence[2],
-      label = sequence[3];
+  async plotLine(sequence: _PlottingHash) {
+    const dataset = sequence[0],
+      collection = sequence[1],
+      set = sequence[2],
+      visit = sequence[3],
+      label = sequence[4];
 
-    if (file === "" || label.name === "unknown") {
+    if (dataset === "" || label.name === "unknown") {
       return;
     }
 
     console.log(
-      `plotting: file='${file}' trainTest='${trainTest}' visit='${visit}' label='${label.name}'`
+      `plotting: dataset='${dataset}' collection='${collection}' set='${set}' visit='${visit}' label='${label.name}'`
     );
-    // TODO: check for empty selectedLabel.
+
     try {
       const response = await axios.get<FeatureResponse>(
-        `http://127.0.0.1:5000/api/feature?f=${file}&t=${trainTest}&v=${visit}&i=${label.value}`
+        `http://127.0.0.1:5000/api/datasets/${dataset}/${collection}/${set}/${visit}/${label.value}`
       );
       const data = response.data.data.feature;
 
@@ -243,23 +251,24 @@ export default class HelloWorld extends Vue {
   }
 
   @Watch("plottingHash")
-  async plotHeatmap(sequence: [string, "train" | "test", number, Label]) {
-    const file = sequence[0],
-      trainTest = sequence[1],
-      visit = sequence[2],
-      label = sequence[3];
+  async plotHeatmap(sequence: _PlottingHash) {
+    const dataset = sequence[0],
+      collection = sequence[1],
+      set = sequence[2],
+      visit = sequence[3],
+      label = sequence[4];
 
-    if (file === "" || label.name === "unknown") {
+    if (dataset === "" || label.name === "unknown") {
       return;
     }
 
     console.log(
-      `plotting heatmap: file='${file}' trainTest='${trainTest}' visit='${visit}'`
+      `plotting: dataset='${dataset}' collection='${collection}' set='${set}' visit='${visit}' label='${label.name}'`
     );
 
     try {
       const response = await axios.get<NonZeroFeatureResponse>(
-        `http://127.0.0.1:5000/api/nonzero_features?f=${file}&t=${trainTest}&v=${visit}`
+        `http://127.0.0.1:5000/api/datasets/${dataset}/${collection}/${set}/${visit}`
       );
       const data = response.data.data;
 
@@ -280,7 +289,7 @@ export default class HelloWorld extends Vue {
       // Add x-axis (features)
       const x = d3
         .scaleBand()
-        .domain(Array.from(data, d => d.feature_id.toString()))
+        .domain(Array.from(data.features, d => d.featureID.toString()))
         .range([0, width])
         .padding(0.1);
       svg
@@ -292,7 +301,7 @@ export default class HelloWorld extends Vue {
       const y = d3
         .scaleBand()
         // TODO: how to prevent typescript from thinking value can be undefined?
-        .domain(Array.from(data, d => d.timepoint.toString()))
+        .domain(Array.from(data.features, d => d.timepoint.toString()))
         .range([height, 0])
         .padding(0.1);
       svg.append("g").call(d3.axisLeft(y));
@@ -300,15 +309,13 @@ export default class HelloWorld extends Vue {
       const color = d3
         .scaleLinear<string>()
         .range(["black", "blue"])
-        .domain(d3.extent(data, d => d.value));
-
-      console.log(`extent: ${d3.extent(data, d => d.value)}`);
+        .domain(d3.extent(data.features, d => d.value));
 
       svg
-        .data(data)
+        .data(data.features)
         .enter()
         .append("rect")
-        .attr("x", d => x(d.feature_id.toString()))
+        .attr("x", d => x(d.featureID.toString()))
         .attr("y", d => y(d.timepoint.toString()))
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
@@ -319,21 +326,22 @@ export default class HelloWorld extends Vue {
   }
 
   async mounted() {
+    const data = this.$data as Data;
     try {
       const fileResponse = await axios.get<DatasetsResponse>(
-        "http://127.0.0.1:5000/api/files"
+        "http://127.0.0.1:5000/api/datasets"
       );
-      this.$data.files = fileResponse.data.data.datasets;
+      data.datasets = fileResponse.data.data.datasets;
 
-      const labelResponse = await axios.get<LabelResponse>(
-        "http://127.0.0.1:5000/api/labels"
+      const labelResponse = await axios.get<LabelsResponse>(
+        "http://127.0.0.1:5000/api/datasets/0001/processed/train/labels"
       );
-      this.$data.labels = labelResponse.data.data.labels;
+      data.labels = labelResponse.data.data.labels;
 
       const shapeResponse = await axios.get<ShapeResponse>(
-        "http://127.0.0.1:5000/api/features/shape"
+        "http://127.0.0.1:5000/api/datasets/0001/processed/train"
       );
-      this.$data.shape = shapeResponse.data.data;
+      data.shape = shapeResponse.data.data;
     } catch (error) {
       console.log(error);
     }
