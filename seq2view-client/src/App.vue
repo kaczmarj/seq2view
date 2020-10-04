@@ -1,7 +1,7 @@
 <template>
   <v-app id="inspire">
         <v-app-bar clipped-left app>
-          <v-app-bar-nav-icon></v-app-bar-nav-icon>
+          <v-app-bar-nav-icon @click="invertShowDrawer"></v-app-bar-nav-icon>
       <!-- <v-app-bar-nav-icon @click="showDrawer = !showDrawer"></v-app-bar-nav-icon> -->
       <v-toolbar-title>Data Viewer</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -31,7 +31,11 @@ import Drawer from '@/components/Drawer.vue'
 })
 export default class App extends Vue {
   data () {
-    return { showDrawer: false }
+    return {}
+  }
+
+  invertShowDrawer () {
+    this.$store.commit('invertShowDrawer')
   }
 }
 </script>

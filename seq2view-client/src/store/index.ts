@@ -18,7 +18,8 @@ export const store = new Vuex.Store({
     selectedDataset: '',
     selectedCollection: '' as types.KnownCollections,
     selectedSet: '' as types.KnownSets,
-    selections: [{ id: 0, feature: '', visit: 0 }] as Selection[]
+    selections: [{ id: 0, feature: '', visit: 0 }] as Selection[],
+    showDrawer: true
   },
   mutations: {
 
@@ -64,6 +65,10 @@ export const store = new Vuex.Store({
     },
     popSelection (state) {
       state.selections.pop()
+    },
+
+    invertShowDrawer (state) {
+      state.showDrawer = !state.showDrawer
     }
   },
   actions: {

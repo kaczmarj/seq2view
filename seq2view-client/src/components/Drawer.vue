@@ -1,7 +1,7 @@
 <template>
      <v-navigation-drawer
       app
-      v-model="show"
+      v-bind:value="showDrawer"
       clipped
       hide-overlay
       stateless
@@ -13,7 +13,11 @@
                 <DatasetSubsetSelector />
             </v-col>
         </v-row>
-        <v-row v-for="(selector, index) in visitLabelSelectors" :key="index">
+        <v-container
+            pa-0
+            v-if="(this.$store.state.selectedDataset) && (this.$store.state.selectedCollection) && (this.$store.state.selectedSet)">
+        <v-row
+            v-for="(selector, index) in visitLabelSelectors" :key="index">
             <v-col>
                 <VisitLabelSelector :selection="`Selection ${index+1}`" />
             </v-col>
@@ -31,11 +35,12 @@
         <v-btn
             elevation="2"
             color="error"
-            :disabled="visitLabelSelectors.length===0"
+            :disabled="visitLabelSelectors.length < 2"
             @click="popVisitLabelSelector"
             >Remove</v-btn>
             </v-col>
         </v-row>
+        </v-container>
 
         </v-container>
     </v-navigation-drawer>
@@ -51,9 +56,11 @@ import { Component, Vue } from 'vue-property-decorator'
 @Component({ components: { DatasetSubsetSelector, VisitLabelSelector } })
 export default class Drawer extends Vue {
   data () {
-    return {
-      show: true
-    }
+    return {}
+  }
+
+  get showDrawer (): boolean {
+    return this.$store.state.showDrawer
   }
 
   get visitLabelSelectors (): Selection[] {
