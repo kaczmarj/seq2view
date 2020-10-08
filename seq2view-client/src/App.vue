@@ -2,7 +2,6 @@
   <v-app id="inspire">
         <v-app-bar clipped-left app>
           <v-app-bar-nav-icon @click="invertShowDrawer"></v-app-bar-nav-icon>
-      <!-- <v-app-bar-nav-icon @click="showDrawer = !showDrawer"></v-app-bar-nav-icon> -->
       <v-toolbar-title>Data Viewer</v-toolbar-title>
       <v-spacer></v-spacer>
        <v-btn class="ma-2" href="https://github.com/kaczmarj/seq2view" target="_blank">
