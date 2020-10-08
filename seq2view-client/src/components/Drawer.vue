@@ -15,7 +15,7 @@
         </v-row>
         <v-container
             pa-0
-            v-if="(this.$store.state.selectedDataset) && (this.$store.state.selectedCollection) && (this.$store.state.selectedSet)">
+            v-if="showVisitLabelSelector">
         <v-row
             v-for="(selector, index) in visitLabelSelectors" :key="index">
             <v-col>
@@ -55,16 +55,19 @@ import { Component, Vue } from 'vue-property-decorator'
 
 @Component({ components: { DatasetSubsetSelector, VisitLabelSelector } })
 export default class Drawer extends Vue {
-  data () {
-    return {}
-  }
-
   get showDrawer (): boolean {
     return this.$store.state.showDrawer
   }
 
   get visitLabelSelectors (): Selection[] {
     return this.$store.state.selections
+  }
+
+  get showVisitLabelSelector () {
+    return (
+      (this.$store.state.selectedDataset) &&
+      (this.$store.state.selectedCollection) &&
+      (this.$store.state.selectedSet))
   }
 
   addVisitLabelSelector () {
