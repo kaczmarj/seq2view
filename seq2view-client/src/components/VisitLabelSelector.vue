@@ -58,7 +58,7 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
     return {
       selection: {
         feature: '',
-        visit: 0 // 1-based indexing instead of 0-based.
+        visit: 1 // 1-based indexing instead of 0
       } as types.FeatureVisitSelection
     }
   }
@@ -73,7 +73,12 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
 
   @Watch('selection', { deep: true })
   setSelectedFeature () {
-    const kwargs = { id: +this.id - 1, feature: this.$data.selection.feature, visit: this.$data.selection.visit }
+    const kwargs = {
+      id: +this.id - 1,
+      feature: this.$data.selection.feature,
+      // Used 1-based indexing.
+      visit: this.$data.selection.visit - 1
+    }
     this.$store.commit('updateSelection', kwargs)
   }
 }

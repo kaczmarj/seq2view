@@ -20,6 +20,8 @@ export const store = new Vuex.Store({
       shape: [0, 0, 0]
     } as types.Shape,
     labels: [] as types.Label[],
+    // visit here uses 0-based indexing to conform to API. 1-based indexing
+    // only used in range selector to make more sense to a human reader.
     selections: [{ id: 0, feature: '', visit: 0 }] as types.FeatureVisitSelection[],
     showDrawer: true
   },
