@@ -54,7 +54,7 @@ export interface NonZeroFeatureResponse {
   };
   status: string;
 }
-interface FeaturePoint {
+export interface FeaturePoint {
   x: number;
   y: number;
 }
