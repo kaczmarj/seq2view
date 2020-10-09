@@ -80,8 +80,6 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
       visit: this.$data.selection.visit - 1
     }
     this.$store.commit('updateSelection', kwargs)
-
-    console.log(kwargs)
   }
 }
 </script>
