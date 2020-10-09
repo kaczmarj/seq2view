@@ -1,14 +1,10 @@
+// The one true source of information.
+
 import Vue from 'vue'
 import Vuex from 'vuex'
 import * as types from '../types'
 
 Vue.use(Vuex)
-
-export interface Selection {
-  id: number;
-    feature: string;
-    visit: number;
-}
 
 export const store = new Vuex.Store({
   state: {
@@ -18,7 +14,13 @@ export const store = new Vuex.Store({
     selectedDataset: '',
     selectedCollection: '' as types.KnownCollections,
     selectedSet: '' as types.KnownSets,
-    selections: [{ id: 0, feature: '', visit: 0 }] as Selection[],
+    shape: {
+      fields: { features: 0, timepoints: 0, visits: 0 },
+      rank: 0,
+      shape: [0, 0, 0]
+    } as types.Shape,
+    labels: [] as types.Label[],
+    selections: [{ id: 0, feature: '', visit: 0 }] as types.FeatureVisitSelection[],
     showDrawer: true
   },
   mutations: {
@@ -52,6 +54,14 @@ export const store = new Vuex.Store({
       state.selectedSet = set
     },
 
+    setShape (state, shape: types.Shape) {
+      state.shape = shape
+    },
+
+    setLabels (state, labels: types.Label[]) {
+      state.labels = labels
+    },
+
     addSelection (state) {
       let lastID = 0
       if (state.selections.length > 0) {
@@ -63,8 +73,14 @@ export const store = new Vuex.Store({
         visit: 0
       })
     },
+
     popSelection (state) {
       state.selections.pop()
+    },
+
+    updateSelection (state, kwargs: {id: number; feature: string; visit: number}) {
+      state.selections[kwargs.id].feature = kwargs.feature
+      state.selections[kwargs.id].visit = kwargs.visit
     },
 
     invertShowDrawer (state) {

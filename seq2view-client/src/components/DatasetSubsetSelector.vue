@@ -108,5 +108,35 @@ export default class DatasetSubsetSelector extends Vue {
   setSet () {
     this.$store.commit('setSelectedSet', this.$data.selections.set)
   }
+
+  @Watch('selections.set')
+  async setShape () {
+    try {
+      const response = await axios.get<types.ShapeResponse>(
+        'http://127.0.0.1:5000/' +
+        `/api/datasets/${this.$store.state.selectedDataset}/` +
+        `${this.$store.state.selectedCollection}/` +
+        `${this.$store.state.selectedSet}`
+      )
+      this.$store.commit('setShape', response.data.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  @Watch('selections.set')
+  async setLabels () {
+    try {
+      const response = await axios.get<types.LabelsResponse>(
+        'http://127.0.0.1:5000/' +
+        `/api/datasets/${this.$store.state.selectedDataset}/` +
+        `${this.$store.state.selectedCollection}/` +
+        `${this.$store.state.selectedSet}/labels`
+      )
+      this.$store.commit('setLabels', response.data.data.labels)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 }
 </script>
