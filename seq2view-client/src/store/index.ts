@@ -15,9 +15,9 @@ export const store = new Vuex.Store({
     selectedCollection: '' as types.KnownCollections,
     selectedSet: '' as types.KnownSets,
     shape: {
-      fields: { features: 0, timepoints: 0, visits: 0 },
+      fields: { features: 0, timepoints: 0, visits: 1 },
       rank: 0,
-      shape: [0, 0, 0]
+      shape: [0, 0, 1]
     } as types.Shape,
     labels: [] as types.Label[],
     // visit here uses 0-based indexing to conform to API. 1-based indexing
