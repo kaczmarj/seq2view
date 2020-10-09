@@ -8,8 +8,8 @@
           v-model="selection.feature"
           :items="labels"
           item-text="name"
-          item-value="value"
           label="Feature"
+          return-object
         ></v-autocomplete>
       </v-col>
     </v-row>
@@ -57,7 +57,7 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
   data () {
     return {
       selection: {
-        feature: '',
+        feature: {},
         visit: 1 // 1-based indexing instead of 0
       } as types.FeatureVisitSelection
     }
@@ -80,6 +80,8 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
       visit: this.$data.selection.visit - 1
     }
     this.$store.commit('updateSelection', kwargs)
+
+    console.log(kwargs)
   }
 }
 </script>

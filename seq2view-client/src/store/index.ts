@@ -22,7 +22,7 @@ export const store = new Vuex.Store({
     labels: [] as types.Label[],
     // visit here uses 0-based indexing to conform to API. 1-based indexing
     // only used in range selector to make more sense to a human reader.
-    selections: [{ id: 0, feature: '', visit: 0 }] as types.FeatureVisitSelection[],
+    selections: [{ id: 0, feature: {}, visit: 0 }] as types.FeatureVisitSelection[],
     showDrawer: true
   },
   mutations: {
@@ -71,7 +71,7 @@ export const store = new Vuex.Store({
       }
       state.selections.push({
         id: lastID + 1,
-        feature: '',
+        feature: { value: 0, name: '' },
         visit: 0
       })
     },
@@ -80,7 +80,7 @@ export const store = new Vuex.Store({
       state.selections.pop()
     },
 
-    updateSelection (state, kwargs: {id: number; feature: string; visit: number}) {
+    updateSelection (state, kwargs: {id: number; feature: types.Label; visit: number}) {
       state.selections[kwargs.id].feature = kwargs.feature
       state.selections[kwargs.id].visit = kwargs.visit
     },

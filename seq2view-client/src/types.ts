@@ -1,13 +1,6 @@
 export type KnownCollections = 'raw' | 'processed';
 export type KnownSets = 'train' | 'test';
 
-// Selection of feature and visit.
-export interface FeatureVisitSelection {
-  id: number;
-  feature: string;
-  visit: number;
-}
-
 // Response of /api/datasets
 export interface DatasetsResponse {
   data: { datasets: string[] };
@@ -69,4 +62,11 @@ interface FeaturePoint {
 export interface FeatureResponse {
   data: { label: Label; feature: FeaturePoint[] };
   status: string;
+}
+
+// Selection of feature and visit.
+export interface FeatureVisitSelection {
+  id: number;
+  feature: Label;
+  visit: number;
 }

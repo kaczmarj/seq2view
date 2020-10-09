@@ -17,7 +17,7 @@
             pa-0
             v-if="showVisitLabelSelector">
         <v-row
-            v-for="(selector, index) in visitLabelSelectors" :key="index">
+            v-for="(selector, index) in featureVisitSelections" :key="index">
             <v-col>
                 <VisitLabelSelector :id="`${index+1}`" />
             </v-col>
@@ -35,7 +35,7 @@
         <v-btn
             elevation="2"
             color="error"
-            :disabled="visitLabelSelectors.length < 2"
+            :disabled="featureVisitSelections.length < 2"
             @click="popVisitLabelSelector"
             >Remove</v-btn>
             </v-col>
@@ -50,7 +50,7 @@
 <script lang="ts">
 import DatasetSubsetSelector from '@/components/DatasetSubsetSelector.vue'
 import VisitLabelSelector from '@/components/VisitLabelSelector.vue'
-import { Selection } from '../store/index'
+import { FeatureVisitSelection } from '../types'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({ components: { DatasetSubsetSelector, VisitLabelSelector } })
@@ -59,7 +59,7 @@ export default class Drawer extends Vue {
     return this.$store.state.showDrawer
   }
 
-  get visitLabelSelectors (): Selection[] {
+  get featureVisitSelections (): FeatureVisitSelection[] {
     return this.$store.state.selections
   }
 
