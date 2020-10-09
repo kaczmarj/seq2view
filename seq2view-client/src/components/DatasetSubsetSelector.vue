@@ -73,6 +73,12 @@ export default class DatasetSubsetSelector extends Vue {
     }
   }
 
+  @Watch('selection.dataset')
+  setDataset () {
+    console.log(`DATASET: ${this.$data.selections.dataset}`)
+    this.$store.commit('setSelectedDataset', this.$data.selections.dataset)
+  }
+
   async getCollections () {
     this.setDataset() // This is necessary the first time if only one dataset exists.
     try {
@@ -83,12 +89,6 @@ export default class DatasetSubsetSelector extends Vue {
     } catch (error) {
       console.log(error)
     }
-  }
-
-  @Watch('selection.dataset')
-  setDataset () {
-    console.log(`DATASET: ${this.$data.selections.dataset}`)
-    this.$store.commit('setSelectedDataset', this.$data.selections.dataset)
   }
 
   @Watch('selections.collection')
