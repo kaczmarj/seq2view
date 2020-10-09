@@ -27,16 +27,16 @@ export const store = new Vuex.Store({
   },
   mutations: {
 
-    setDatasets (state, datasets: types.DatasetsResponse) {
+    setDatasets(state, datasets: types.DatasetsResponse) {
       state.datasets = datasets.data.datasets
     },
 
-    setCollections (state, info: types.DatasetInfoResponse) {
+    setCollections(state, info: types.DatasetInfoResponse) {
       const c = info.data.nodes.collections
       state.collections = Object.keys(c).filter(d => c[d]) as types.KnownCollections[]
     },
 
-    setSets (state, info: types.DatasetInfoResponse) {
+    setSets(state, info: types.DatasetInfoResponse) {
       const sets = info.data.nodes.sets
       const selectedCollection = state.selectedCollection
       state.sets = Object
@@ -44,27 +44,27 @@ export const store = new Vuex.Store({
         .filter(k => sets[selectedCollection][k]) as types.KnownSets[]
     },
 
-    setSelectedDataset (state, dataset: string) {
+    setSelectedDataset(state, dataset: string) {
       state.selectedDataset = dataset
     },
 
-    setSelectedCollection (state, collection: types.KnownCollections) {
+    setSelectedCollection(state, collection: types.KnownCollections) {
       state.selectedCollection = collection
     },
 
-    setSelectedSet (state, set: types.KnownSets) {
+    setSelectedSet(state, set: types.KnownSets) {
       state.selectedSet = set
     },
 
-    setShape (state, shape: types.Shape) {
+    setShape(state, shape: types.Shape) {
       state.shape = shape
     },
 
-    setLabels (state, labels: types.Label[]) {
+    setLabels(state, labels: types.Label[]) {
       state.labels = labels
     },
 
-    addSelection (state) {
+    addSelection(state) {
       let lastID = 0
       if (state.selections.length > 0) {
         lastID = state.selections[state.selections.length - 1].id
@@ -76,16 +76,16 @@ export const store = new Vuex.Store({
       })
     },
 
-    popSelection (state) {
+    popSelection(state) {
       state.selections.pop()
     },
 
-    updateSelection (state, kwargs: {id: number; feature: types.Label; visit: number}) {
+    updateSelection(state, kwargs: { id: number; feature: types.Label; visit: number }) {
       state.selections[kwargs.id].feature = kwargs.feature
       state.selections[kwargs.id].visit = kwargs.visit
     },
 
-    invertShowDrawer (state) {
+    invertShowDrawer(state) {
       state.showDrawer = !state.showDrawer
     }
   },
