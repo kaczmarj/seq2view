@@ -1,14 +1,17 @@
 <template>
   <v-container>
 
-    <h1>Plots</h1>
+    <h1 v-if="plotsAvailable">Plots</h1>
+    <h1 v-else>Select options on the left side.</h1>
 
+    <div v-if="featureVisitSelections[0].feature.name !== undefined">
     <v-row
       v-for="(selector, index) in featureVisitSelections" :key="index">
       <v-col>
           <LinePlot :id="index" />
       </v-col>
     </v-row>
+    </div>
 
   </v-container>
 </template>
@@ -27,6 +30,10 @@ export default class Plots extends Vue {
 
   get featureVisitSelections (): types.FeatureVisitSelection[] {
     return this.$store.state.selections
+  }
+
+  get plotsAvailable () {
+    return this.$store.state.selections[0].feature.name !== undefined
   }
 }
 </script>
