@@ -14,22 +14,22 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import LinePlot from "@/components/LinePlot.vue";
-import * as types from "../types";
+import { Component, Vue } from 'vue-property-decorator'
+import LinePlot from '@/components/LinePlot.vue'
+import * as types from '../types'
 
 @Component({ components: { LinePlot } })
 export default class Plots extends Vue {
-  data() {
-    return {};
+  data () {
+    return {}
   }
 
-  get featureVisitSelections(): types.FeatureVisitSelection[] {
-    return this.$store.state.selections;
+  get featureVisitSelections (): types.FeatureVisitSelection[] {
+    return this.$store.state.selections
   }
 
-  get plotsAvailable() {
-    return this.$store.state.selections[0].feature.name !== undefined;
+  get plotsAvailable () {
+    return this.$store.state.selections[0].feature.name !== undefined
   }
 }
 </script>

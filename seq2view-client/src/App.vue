@@ -22,22 +22,22 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import Plots from "@/components/Plots.vue";
-import Drawer from "@/components/Drawer.vue";
+import { Component, Vue } from 'vue-property-decorator'
+import Plots from '@/components/Plots.vue'
+import Drawer from '@/components/Drawer.vue'
 @Component({
   components: {
     Drawer,
-    Plots,
-  },
+    Plots
+  }
 })
 export default class App extends Vue {
-  data() {
-    return {};
+  data () {
+    return {}
   }
 
-  invertShowDrawer() {
-    this.$store.commit("invertShowDrawer");
+  invertShowDrawer () {
+    this.$store.commit('invertShowDrawer')
   }
 }
 </script>

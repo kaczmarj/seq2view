@@ -41,35 +41,35 @@
 </template>
 
 <script lang="ts">
-import DatasetSubsetSelector from "@/components/DatasetSubsetSelector.vue";
-import VisitLabelSelector from "@/components/VisitLabelSelector.vue";
-import { FeatureVisitSelection } from "../types";
-import { Component, Vue } from "vue-property-decorator";
+import DatasetSubsetSelector from '@/components/DatasetSubsetSelector.vue'
+import VisitLabelSelector from '@/components/VisitLabelSelector.vue'
+import { FeatureVisitSelection } from '../types'
+import { Component, Vue } from 'vue-property-decorator'
 
 @Component({ components: { DatasetSubsetSelector, VisitLabelSelector } })
 export default class Drawer extends Vue {
-  get showDrawer(): boolean {
-    return this.$store.state.showDrawer;
+  get showDrawer (): boolean {
+    return this.$store.state.showDrawer
   }
 
-  get featureVisitSelections(): FeatureVisitSelection[] {
-    return this.$store.state.selections;
+  get featureVisitSelections (): FeatureVisitSelection[] {
+    return this.$store.state.selections
   }
 
-  get showVisitLabelSelector() {
+  get showVisitLabelSelector () {
     return (
       this.$store.state.selectedDataset &&
       this.$store.state.selectedCollection &&
       this.$store.state.selectedSet
-    );
+    )
   }
 
-  addVisitLabelSelector() {
-    this.$store.commit("addSelection");
+  addVisitLabelSelector () {
+    this.$store.commit('addSelection')
   }
 
-  popVisitLabelSelector() {
-    this.$store.commit("popSelection");
+  popVisitLabelSelector () {
+    this.$store.commit('popSelection')
   }
 }
 </script>

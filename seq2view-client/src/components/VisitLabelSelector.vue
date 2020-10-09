@@ -44,43 +44,43 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
-import * as types from "../types";
+import { Component, Vue, Watch } from 'vue-property-decorator'
+import * as types from '../types'
 
 const VisitLabelSelectorProps = Vue.extend({
   props: {
-    id: Number,
-  },
-});
+    id: Number
+  }
+})
 
 @Component
 export default class VisitLabelSelector extends VisitLabelSelectorProps {
-  data() {
+  data () {
     return {
       selection: {
         feature: {},
-        visit: 1, // 1-based indexing instead of 0
-      } as types.FeatureVisitSelection,
-    };
+        visit: 1 // 1-based indexing instead of 0
+      } as types.FeatureVisitSelection
+    }
   }
 
-  get shape(): types.Shape {
-    return this.$store.state.shape;
+  get shape (): types.Shape {
+    return this.$store.state.shape
   }
 
-  get labels(): types.Label[] {
-    return this.$store.state.labels;
+  get labels (): types.Label[] {
+    return this.$store.state.labels
   }
 
-  @Watch("selection", { deep: true })
-  setSelectedFeature() {
+  @Watch('selection', { deep: true })
+  setSelectedFeature () {
     const kwargs = {
       id: this.id,
       feature: this.$data.selection.feature,
       // Used 1-based indexing.
-      visit: this.$data.selection.visit - 1,
-    };
-    this.$store.commit("updateSelection", kwargs);
+      visit: this.$data.selection.visit - 1
+    }
+    this.$store.commit('updateSelection', kwargs)
   }
 }
 </script>

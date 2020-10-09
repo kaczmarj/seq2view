@@ -49,99 +49,99 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from "vue-property-decorator";
-import axios from "axios";
-import * as types from "../types";
+import { Component, Vue, Watch } from 'vue-property-decorator'
+import axios from 'axios'
+import * as types from '../types'
 
 @Component
 export default class DatasetSubsetSelector extends Vue {
-  data() {
+  data () {
     return {
       selections: {
-        dataset: "",
-        collection: "",
-        set: "",
-      },
-    };
+        dataset: '',
+        collection: '',
+        set: ''
+      }
+    }
   }
 
-  async mounted() {
+  async mounted () {
     try {
       const response = await axios.get<types.DatasetsResponse>(
-        "http://127.0.0.1:5000/api/datasets"
-      );
-      this.$store.commit("setDatasets", response.data);
+        'http://127.0.0.1:5000/api/datasets'
+      )
+      this.$store.commit('setDatasets', response.data)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
-  @Watch("selection.dataset")
-  setDataset() {
-    console.log(`DATASET: ${this.$data.selections.dataset}`);
-    this.$store.commit("setSelectedDataset", this.$data.selections.dataset);
+  @Watch('selection.dataset')
+  setDataset () {
+    console.log(`DATASET: ${this.$data.selections.dataset}`)
+    this.$store.commit('setSelectedDataset', this.$data.selections.dataset)
   }
 
-  async getCollections() {
-    this.setDataset(); // This is necessary the first time if only one dataset exists.
+  async getCollections () {
+    this.setDataset() // This is necessary the first time if only one dataset exists.
     try {
       const response = await axios.get<types.DatasetInfoResponse>(
         `http://127.0.0.1:5000/api/datasets/${this.$data.selections.dataset}`
-      );
-      this.$store.commit("setCollections", response.data);
+      )
+      this.$store.commit('setCollections', response.data)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
-  @Watch("selections.collection")
-  async getSets() {
+  @Watch('selections.collection')
+  async getSets () {
     this.$store.commit(
-      "setSelectedCollection",
+      'setSelectedCollection',
       this.$data.selections.collection
-    );
+    )
     try {
       const response = await axios.get<types.DatasetInfoResponse>(
         `http://127.0.0.1:5000/api/datasets/${this.$data.selections.dataset}`
-      );
-      this.$store.commit("setSets", response.data);
+      )
+      this.$store.commit('setSets', response.data)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
-  @Watch("selections.set")
-  setSet() {
-    this.$store.commit("setSelectedSet", this.$data.selections.set);
+  @Watch('selections.set')
+  setSet () {
+    this.$store.commit('setSelectedSet', this.$data.selections.set)
   }
 
-  @Watch("selections.set")
-  async setShape() {
+  @Watch('selections.set')
+  async setShape () {
     try {
       const response = await axios.get<types.ShapeResponse>(
-        "http://127.0.0.1:5000/" +
+        'http://127.0.0.1:5000/' +
           `/api/datasets/${this.$store.state.selectedDataset}/` +
           `${this.$store.state.selectedCollection}/` +
           `${this.$store.state.selectedSet}`
-      );
-      this.$store.commit("setShape", response.data.data);
+      )
+      this.$store.commit('setShape', response.data.data)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 
-  @Watch("selections.set")
-  async setLabels() {
+  @Watch('selections.set')
+  async setLabels () {
     try {
       const response = await axios.get<types.LabelsResponse>(
-        "http://127.0.0.1:5000/" +
+        'http://127.0.0.1:5000/' +
           `/api/datasets/${this.$store.state.selectedDataset}/` +
           `${this.$store.state.selectedCollection}/` +
           `${this.$store.state.selectedSet}/labels`
-      );
-      this.$store.commit("setLabels", response.data.data.labels);
+      )
+      this.$store.commit('setLabels', response.data.data.labels)
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   }
 }
