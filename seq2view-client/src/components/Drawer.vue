@@ -19,7 +19,7 @@
         <v-row
             v-for="(selector, index) in featureVisitSelections" :key="index">
             <v-col>
-                <VisitLabelSelector :id="`${index+1}`" />
+                <VisitLabelSelector :id="index" />
             </v-col>
         </v-row>
 

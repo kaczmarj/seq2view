@@ -1,7 +1,7 @@
 <template>
   <v-card tile>
   <v-container>
-    <v-row><v-card-title>Selection {{ id }}</v-card-title></v-row>
+    <v-row><v-card-title>Selection {{ id + 1 }}</v-card-title></v-row>
     <v-row align="center">
       <v-col class="d-flex" v-if="labels.length > 0">
         <v-autocomplete
@@ -48,7 +48,7 @@ import * as types from '../types'
 
 const VisitLabelSelectorProps = Vue.extend({
   props: {
-    id: String
+    id: Number
   }
 })
 
@@ -74,7 +74,7 @@ export default class VisitLabelSelector extends VisitLabelSelectorProps {
   @Watch('selection', { deep: true })
   setSelectedFeature () {
     const kwargs = {
-      id: +this.id - 1,
+      id: this.id,
       feature: this.$data.selection.feature,
       // Used 1-based indexing.
       visit: this.$data.selection.visit - 1
