@@ -19,7 +19,7 @@
         <v-row
             v-for="(selector, index) in visitLabelSelectors" :key="index">
             <v-col>
-                <VisitLabelSelector :selection="`Selection ${index+1}`" />
+                <VisitLabelSelector :id="`${index+1}`" />
             </v-col>
         </v-row>
 
