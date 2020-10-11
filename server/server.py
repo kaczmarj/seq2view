@@ -5,74 +5,60 @@ Flask application to serve data in JSON API. Only GET requests are implemented.
 import functools
 import itertools
 import os
-from pathlib import Path
-from pathlib import PosixPath
+import pathlib
 
-import flask
-import flask_cors
+import fastapi
 import h5py
-import markupsafe
 import numpy as np
 
-# JSend spec https://github.com/omniti-labs/jsend
-STATUS_SUCCESS = "success"
-STATUS_FAIL = "fail"
-STATUS_ERROR = "error"
+from fastapi.middleware.cors import CORSMiddleware
 
-app = flask.Flask(__name__)
-# TODO: remove for production. Enable CORS during development.
-flask_cors.CORS(app)
+app = fastapi.FastAPI()
+
+origins = [
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+_data_path = os.environ.get("SEQ2VIEW_DATA_PATH") or pathlib.Path(__file__).parent
 
 # Attempt to mock having filepaths stored somewhere and referenced in API.
-_datasets = {"0001": Path(__file__).parent / "processed_ohdsi_sequences.h5"}
+_datasets = {"0001": pathlib.Path(__file__).parent / "processed_ohdsi_sequences.h5"}
 
 
-def _dataset_exists(dataset):
-    found = dataset in _datasets
-    return found, (
-        {"status": STATUS_FAIL, "message": f"dataset not found: {dataset}"},
-        400,
-    )
+@app.get("/api/datasets")
+async def get_datasets():
+    return {"data": {"datasets": list(_datasets.keys())}}
 
 
-@app.route("/api/datasets")
-def get_datasets():
-    return {"status": STATUS_SUCCESS, "data": {"datasets": list(_datasets.keys())}}
-
-
-@app.route("/api/datasets/<string:dataset>")
-def get_dataset_info(dataset):
-    dataset = markupsafe.escape(dataset)
-    exists, response = _dataset_exists(dataset)
-    if not exists:
-        return response
-    filepath = _datasets[dataset]
-    dataset = HDF5Dataset(filepath)
+@app.get("/api/datasets/{dataset}")
+async def get_dataset_info(dataset: str):
+    dataset = _get_dataset(dataset)
     return {
-        "status": STATUS_SUCCESS,
         "data": {"nodes": {"collections": dataset.collections, "sets": dataset.sets}}
-        # TODO: add human-readable shape information
     }
 
 
-@app.route("/api/datasets/<string:dataset>/<string:collection>/<string:set_>")
-def get_shape(dataset, collection, set_):
-    dataset = markupsafe.escape(dataset)
-    collection = markupsafe.escape(collection)
-    set_ = markupsafe.escape(set_)
-    exists, response = _dataset_exists(dataset)
-    if not exists:
-        return response
-    filepath = _datasets[dataset]
-    dataset = HDF5Dataset(filepath)
+@app.get("/api/datasets/{dataset}/{collection}/{set_}")
+async def get_shape(dataset: str, collection: str, set_: str):
+    dataset = _get_dataset(dataset)
     shape = dataset.shape(collection=collection, set_=set_)
-    if len(shape) != 3:
-        raise ValueError(f"Expected rank 3 but got {len(shape)}")
+    rank = len(shape)
+    if rank != 3:
+        raise fastapi.HTTPException(
+            500, detail=f"expected data of rank 3 but got {rank}"
+        )
     return {
-        "status": STATUS_SUCCESS,
         "data": {
             "shape": shape,
-            "rank": len(shape),
+            "rank": rank,
             "fields": {
                 "visits": shape[0],
                 "timepoints": shape[1],
@@ -82,20 +68,12 @@ def get_shape(dataset, collection, set_):
     }
 
 
-@app.route("/api/datasets/<string:dataset>/<string:collection>/<string:set_>/labels")
-def get_labels(dataset, collection, set_):
-    dataset = markupsafe.escape(dataset)
-    collection = markupsafe.escape(collection)
-    set_ = markupsafe.escape(set_)
-    exists, response = _dataset_exists(dataset)
-    if not exists:
-        return response
-    filepath = _datasets[dataset]
-    dataset = HDF5Dataset(filepath)
+@app.get("/api/datasets/{dataset}/{collection}/{set_}/labels")
+async def get_labels(dataset: str, collection: str, set_: str):
+    dataset = _get_dataset(dataset)
     try:
         labels = dataset.human_readable_labels(collection=collection, set_=set_)
         return {
-            "status": STATUS_SUCCESS,
             "data": {
                 "labels": [
                     {"value": j, "name": label} for j, label in enumerate(labels)
@@ -103,22 +81,12 @@ def get_labels(dataset, collection, set_):
             },
         }
     except NodeNotFound as e:
-        return {"status": STATUS_FAIL, "message": str(e)}, 400
+        raise fastapi.HTTPException(400, detail=str(e))
 
 
-@app.route(
-    "/api/datasets/<string:dataset>/<string:collection>/<string:set_>/<int:visit>"
-)
-def get_nonzero_visit_data(dataset, collection, set_, visit):
-    dataset = markupsafe.escape(dataset)
-    collection = markupsafe.escape(collection)
-    set_ = markupsafe.escape(set_)
-    exists, response = _dataset_exists(dataset)
-    if not exists:
-        return response
-    filepath = _datasets[dataset]
-    dataset = HDF5Dataset(filepath)
-
+@app.get("/api/datasets/{dataset}/{collection}/{set_}/{visit}")
+async def get_nonzero_visit_data(dataset: str, collection: str, set_: str, visit: int):
+    dataset = _get_dataset(dataset)
     try:
         (
             nonzero_visit_data,
@@ -146,26 +114,18 @@ def get_nonzero_visit_data(dataset, collection, set_, visit):
         ]
 
         return {
-            "status": STATUS_SUCCESS,
             "data": {"labels": labels, "features": features},
         }
 
-    except (KeyError, ValueError) as err:
-        return {"status": STATUS_FAIL, "data": {"error": {"message": str(err)}}}
+    except (KeyError, ValueError) as e:
+        raise fastapi.HTTPException(400, detail=str(e))
 
 
-@app.route(
-    "/api/datasets/<string:dataset>/<string:collection>/<string:set_>/<int:visit>/<int:feature>"
-)
-def get_feature(dataset, collection, set_, visit, feature):
-    dataset = markupsafe.escape(dataset)
-    collection = markupsafe.escape(collection)
-    set_ = markupsafe.escape(set_)
-    exists, response = _dataset_exists(dataset)
-    if not exists:
-        return response
-    filepath = _datasets[dataset]
-    dataset = HDF5Dataset(filepath)
+@app.get("/api/datasets/{dataset}/{collection}/{set_}/{visit}/{feature}")
+async def get_feature(
+    dataset: str, collection: str, set_: str, visit: int, feature: int
+):
+    dataset = _get_dataset(dataset)
 
     try:
         x, y = dataset.features(
@@ -174,14 +134,13 @@ def get_feature(dataset, collection, set_, visit, feature):
         feature_labels = dataset.human_readable_labels(collection=collection, set_=set_)
         human_readable_label = feature_labels[feature]
         return {
-            "status": STATUS_SUCCESS,
             "data": {
                 "feature": [{"x": i, "y": j} for (i, j) in zip(x, y)],
                 "label": {"value": feature, "name": human_readable_label},
             },
         }
-    except (KeyError, ValueError) as err:
-        return {"status": STATUS_FAIL, "message": str(err)}
+    except (KeyError, ValueError) as e:
+        raise fastapi.HTTPException(400, detail=str(e))
 
 
 class NodeNotFound(Exception):
@@ -210,7 +169,7 @@ class HDF5Dataset:
             raise FileNotFoundError(f"file not found: {filepath}")
         self._filepath = filepath
         # HDF5 node names are POSIX-like.
-        self._root_node = PosixPath("/data")
+        self._root_node = pathlib.PosixPath("/data")
 
     def _raise_if_node_not_found(self, node):
         node = str(node)
@@ -305,3 +264,14 @@ class HDF5Dataset:
             original_feature_ids.tolist(),
             labels_included.tolist(),
         )
+
+
+def _get_dataset(dataset: str) -> HDF5Dataset:
+    try:
+        filepath = _datasets[dataset]
+    except KeyError:
+        raise fastapi.HTTPException(status_code=404, detail="unknown dataset")
+    try:
+        return HDF5Dataset(filepath)
+    except FileNotFoundError:
+        raise fastapi.HTTPException(status_code=500, detail="dataset file not found")
