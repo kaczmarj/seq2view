@@ -23,7 +23,7 @@ export default class LinePlot extends LinePlotProps {
     const state = this.$store.state
     const selection: types.FeatureVisitSelection = state.selections[this.id]
     return (
-      '/api/datasets/' +
+      'api/datasets/' +
       `${state.selectedDataset}/` +
       `${state.selectedCollection}/` +
       `${state.selectedSet}/` +
