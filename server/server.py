@@ -8,29 +8,43 @@ import os
 import pathlib
 
 import fastapi
+from fastapi.middleware.cors import CORSMiddleware
 import h5py
 import numpy as np
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app = fastapi.FastAPI()
-
-origins = [
-    "http://localhost:8080",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:8080", "http://0.0.0.0:80"],
     allow_credentials=True,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
 
-_data_path = os.environ.get("SEQ2VIEW_DATA_PATH") or pathlib.Path(__file__).parent
 
-# Attempt to mock having filepaths stored somewhere and referenced in API.
-_datasets = {"0001": pathlib.Path(__file__).parent / "processed_ohdsi_sequences.h5"}
+def _get_registered_datasets(log=True):
+    datasets = {}
+    for key in os.environ.keys():
+        if key.startswith("SEQ2VIEW_DATASET_"):
+            k = key.split("_")[2]
+            filepath = os.environ[key]
+            if not os.path.exists(filepath):
+                raise FileNotFoundError(filepath)
+            datasets[k] = filepath
+
+    if not datasets:
+        raise ValueError("no datasets registered")
+
+    if log:
+        print("registered datasets:")
+        for k, v in datasets.items():
+            print(f"  {k} = {v}")
+
+    return datasets
+
+
+_datasets = _get_registered_datasets(log=True)
 
 
 @app.get("/api/datasets")
