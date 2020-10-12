@@ -5,4 +5,3 @@ COPY requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 COPY . .
 USER nonroot
-EXPOSE 5000
