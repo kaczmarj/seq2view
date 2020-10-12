@@ -1,12 +1,10 @@
 version: "3.8"
 
 services:
-  server:
+  api-server:
     build: ./server
     restart: always
-    ports:
-      - "5000:5000"
-    command: gunicorn server:app -b 127.0.0.1:5000 -w 4 -k uvicorn.workers.UvicornWorker
+    command: gunicorn server:app -b :5050 -w 4 -k uvicorn.workers.UvicornWorker
     volumes:
       - ./data:/data:ro
     env_file:
@@ -19,7 +17,7 @@ services:
     volumes:
       - static-volume:/opt/client
     depends_on:
-      - server
+      - api-server
 
   web:
     image: nginx:mainline-alpine
@@ -29,9 +27,10 @@ services:
       # Attach static client code.
       - static-volume:/usr/share/nginx/html:ro
     ports:
-      - 80:80
+      - "80:80"
+      - "5000:5000"  # API server.
     depends_on:
-      - server
+      - api-server
       - client
 
 volumes:
