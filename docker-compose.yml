@@ -11,7 +11,7 @@ services:
       - .env
 
   client:
-    build: ./seq2view-client
+    build: ./client
     restart: always
     tty: true  # Keep container running.
     volumes:
