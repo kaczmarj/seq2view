@@ -75,8 +75,8 @@ export default class HeatMap extends Vue {
     }
 
     d3.select(`#${this.$data.divID} > svg`).remove()
-    const width = 800
-    const height = 600
+    const width = 1200
+    const height = 1000
     const margin = { top: 30, right: 30, bottom: 30, left: 30 }
 
     const svg = d3
