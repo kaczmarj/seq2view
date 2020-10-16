@@ -1,22 +1,7 @@
 .DS_Store
 node_modules
-dist
+/dist
 
-.env
-
-# Data
-*.h5
-*.hdf
-*.hdf5
-
-# Jupyter notebook
-.ipynb_checkpoints
-scratch*.ipynb
-
-# Server virtual environment
-server/venv
-# Old things...
-old-things
 
 # local env files
 .env.local

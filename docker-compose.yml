@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  api-server:
+    build: ./server
+    restart: on-failure
+    # https://www.uvicorn.org/deployment/#gunicorn
+    # gunicorn recommends 2*ncpu+1 workers to start off.
+    # https://docs.gunicorn.org/en/stable/design.html#how-many-workers
+    command: gunicorn server:app -b :5050 -w 3 -k uvicorn.workers.UvicornWorker
+    volumes:
+      - ~/data:/data:ro
+    env_file:
+      - .env
+
+  client:
+    build: ./client
+    restart: on-failure
+    user: "1000:1000"
+    tty: true  # Keep container running.
+    volumes:
+      - static-volume:/opt/client
+    depends_on:
+      - api-server
+
+  web:
+    image: nginx:mainline-alpine
+    restart: on-failure
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Attach static client code.
+      - static-volume:/usr/share/nginx/html:ro
+    ports:
+      - "8080:8080"
+      - "5000:5000"  # API server.
+    depends_on:
+      - api-server
+      - client
+
+volumes:
+  static-volume:

@@ -1,32 +1,43 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view />
-  </div>
+  <v-app id="inspire">
+    <v-app-bar clipped-left app>
+      <v-app-bar-nav-icon @click="invertShowDrawer"></v-app-bar-nav-icon>
+      <v-toolbar-title>Data Viewer</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn
+        class="ma-2"
+        href="https://github.com/kaczmarj/seq2view"
+        target="_blank"
+      >
+        <v-icon left>mdi-github</v-icon>
+        Source
+      </v-btn>
+    </v-app-bar>
+
+    <Drawer />
+    <v-main>
+      <Plots />
+    </v-main>
+  </v-app>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator'
+import Plots from '@/components/Plots.vue'
+import Drawer from '@/components/Drawer.vue'
+@Component({
+  components: {
+    Drawer,
+    Plots
+  }
+})
+export default class App extends Vue {
+  data () {
+    return {}
+  }
 
-#nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
-    }
+  invertShowDrawer () {
+    this.$store.commit('invertShowDrawer')
   }
 }
-</style>
+</script>
