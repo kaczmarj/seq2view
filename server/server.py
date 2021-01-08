@@ -289,3 +289,84 @@ def _get_dataset(dataset: str) -> HDF5Dataset:
         return HDF5Dataset(filepath)
     except FileNotFoundError:
         raise fastapi.HTTPException(status_code=500, detail="dataset file not found")
+
+
+#####################################
+###  Machine learning bits below  ###
+#####################################
+
+def get_predictions_by_timepoint(data_path, model_path, model_summary_path):
+    import json
+
+    import h5py
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    import tensorflow as tf
+
+    with h5py.File(data_path, "r") as f:
+        x_ref_raw = f["/data/processed/test/raw_sequence/core_array"][:]
+        x_ref = f["/data/processed/test/sequence/core_array"][:]
+        y_ref = f["/data/processed/test/target/core_array"][:]
+        identifiers = f["/data/processed/test/identifiers/core_array"][:]
+        target_labels = f["/data/processed/train/target/column_annotations"][:].ravel().tolist()
+        identifier_labels = f["/data/processed/test/identifiers/column_annotations"][...].ravel().tolist()
+
+    with open(model_summary_path) as f:
+        model_summary = json.load(f)
+
+    model = tf.keras.models.load_model(model_path, compile=False)
+    y_pred = tf.math.sigmoid(model.predict(x_ref).ravel()).numpy()
+
+    pred_indices_high_to_low = np.argsort(y_pred)[::-1]
+
+    identifiers = identifiers[pred_indices_high_to_low]
+    y_pred_sorted = y_pred[pred_indices_high_to_low]
+
+    target_label = model_summary["target"]["target_name"]
+    target_labels = [str(s, "utf-8") for s in target_labels]
+    target_label_index = target_labels.index(target_label)
+
+    identifier_labels = [str(s, "utf-8") for s in identifier_labels]
+    y_ref_target_sorted = y_ref[:, target_label_index][pred_indices_high_to_low]
+
+
+    # create (n_timepoints, 6) shape DataFrame.
+    three_cols = np.stack([pred_indices_high_to_low, y_pred_sorted, y_ref_target_sorted], axis=1)
+    data = np.concatenate((identifiers, three_cols), axis=1)
+    columns = ["id", "identifier_id", "start_time", "position", "probability", "ground_truth"]
+    df = pd.DataFrame(data, columns=columns)
+    df = df.astype(
+        {"id": int, "identifier_id": int, "start_time": int, "position": int, "probability": float, "ground_truth": int})
+
+
+    top_n = sum(df["probability"] >=  0.5)
+    position_dict = df.position.to_dict()
+    position_index = df.position.iloc[:top_n].to_numpy()
+
+    _, n_time_steps, n_features = x_ref.shape  # is the first item n_visits?
+
+    # Uses sequence, not raw_sequence.
+    hour_arrays = x_ref[position_index, :, -1]
+
+    sequence_end_array = (hour_arrays != 0).argmin(axis=1)
+    sequence_end_array[sequence_end_array == 0] = n_time_steps - 1
+
+    # Predicting by timepoint.
+    p = tf.keras.utils.Progbar(n_time_steps)
+    tmp = x_ref[position_index[:top_n]]
+    tmpzero = np.zeros_like(tmp)
+    preds_by_timestep = np.zeros((top_n, n_time_steps))
+    # Predict `n_time_steps` times, each iteration adding a new datapoint.
+    # This way, we can see how well we predict knowing all the information up to a certain point.
+    for timestep in range(n_time_steps):
+        tmpzero[:, timestep] = tmp[:, timestep]
+        preds_by_timestep[:, timestep] = tf.sigmoid(model.predict(tmpzero).ravel()).numpy()
+        p.add(1)
+
+    # Data for plotting
+    # for i in range(top_n)[:5]:
+    #     plt.plot(hour_arrays[i,0:sequence_end_array[i]], preds_by_timestep[i,0:sequence_end_array[i]], alpha=0.6)
+
+    return hour_arrays, sequence_end_array, preds_by_timestep
