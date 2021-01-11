@@ -302,7 +302,7 @@ def get_predictions_by_timepoint_test(dataset: str, feature: int):
     """Function used for debugging. Returns pre-made results."""
     import json
 
-    with open("sample-data.json", "w") as f:
+    with open("sample-data.json", "r") as f:
         d = json.load(f)
 
     return d
