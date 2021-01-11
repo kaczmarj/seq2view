@@ -76,7 +76,7 @@ export interface FeatureVisitSelection {
 }
 
 export interface ModelPredictionPoint {
-  h: number; p: number; n: number
+  h: number; p: number; n: number;
 }
 
 // Response of /api/model/<string:dataset>/<int:feature>
