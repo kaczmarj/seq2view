@@ -297,6 +297,17 @@ def _get_dataset(dataset: str) -> HDF5Dataset:
 ################################
 
 
+@app.get("/api/model/{dataset}/{feature}")
+def get_predictions_by_timepoint_test(dataset: str, feature: int):
+    """Function used for debugging. Returns pre-made results."""
+    import json
+
+    with open("sample-data.json", "w") as f:
+        d = json.load(f)
+
+    return d
+
+
 def get_predictions_by_timepoint(data_path, model_path, model_summary_path):
 
     import pandas as pd
@@ -311,9 +322,7 @@ def get_predictions_by_timepoint(data_path, model_path, model_summary_path):
             f["/data/processed/train/target/column_annotations"][:].ravel().tolist()
         )
         identifier_labels = (
-            f["/data/processed/test/identifiers/column_annotations"][...]
-            .ravel()
-            .tolist()
+            f["/data/processed/test/identifiers/column_annotations"][:].ravel().tolist()
         )
 
     with open(model_summary_path) as f:
@@ -385,12 +394,15 @@ def get_predictions_by_timepoint(data_path, model_path, model_summary_path):
         ).numpy()
         p.add(1)
 
-    # Data for plotting
-    # for i in range(top_n)[:5]:
-    #     plt.plot(
-    #         hour_arrays[i, 0 : sequence_end_array[i]],
-    #         preds_by_timestep[i, 0 : sequence_end_array[i]],
-    #         alpha=0.6,
-    #     )
+    d = {"data": []}
+    for i in range(top_n):
+        end = sequence_end_array[i]
+        hs = hour_arrays[i, :end]
+        ps = preds_by_timestep[i, :end]
+        d["data"].extend(
+            [{"h": h.item(), "p": p.item(), "n": i} for (h, p) in zip(hs, ps)]
+        )
 
-    return hour_arrays, sequence_end_array, preds_by_timestep
+    d["n_items"] = len(d["data"])
+
+    return d
