@@ -218,7 +218,7 @@ class HDF5Dataset:
             return f[str(node)].shape
 
     def human_readable_labels(self, collection="processed", set_="train"):
-        node = self._root_node / collection / set_ / "sequence" / "column_annotations"
+        node = self._root_node / collection / set_ / "target" / "column_annotations"
         self._raise_if_node_not_found(node)
         with h5py.File(self._filepath, mode="r") as f:
             labels = f[str(node)][:].flatten().tolist()
@@ -253,9 +253,9 @@ class HDF5Dataset:
 
         # TODO: add this back in when using non-synthetic data.
         # Remove NaN values and samples where x and y are zero.
-        # bad_indices = np.isnan(x) | np.isnan(y) | ((x == 0) & (y == 0))
-        # x = x[~bad_indices].astype(float)
-        # y = y[~bad_indices].astype(float)
+        bad_indices = np.isnan(x) | np.isnan(y) | ((x == 0) & (y == 0))
+        x = x[~bad_indices].astype(float)
+        y = y[~bad_indices].astype(float)
 
         return x.astype(float), y.astype(float)
 
