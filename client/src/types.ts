@@ -74,3 +74,13 @@ export interface FeatureVisitSelection {
   feature: Label;
   visit: number;
 }
+
+export interface ModelPredictionPoint {
+  h: number; p: number; n: number
+}
+
+// Response of /api/model/<string:dataset>/<int:feature>
+export interface ModelPredictionResponse {
+  data: ModelPredictionPoint[];
+  n_items: number;
+}
