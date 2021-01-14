@@ -144,7 +144,11 @@ async def get_feature(
 
     try:
         x, y = dataset.features(
-            collection=collection, set_=set_, visit=visit, feature=feature
+            collection=collection,
+            set_=set_,
+            visit=visit,
+            feature=feature,
+            remove_nan=True,
         )
         feature_labels = dataset.human_readable_labels(collection=collection, set_=set_)
         human_readable_label = feature_labels[feature]
@@ -218,13 +222,22 @@ class HDF5Dataset:
             return f[str(node)].shape
 
     def human_readable_labels(self, collection="processed", set_="train"):
-        node = self._root_node / collection / set_ / "target" / "column_annotations"
+        """Return human-readable labels for the features."""
+        node = self._root_node / collection / set_ / "sequence" / "column_annotations"
         self._raise_if_node_not_found(node)
         with h5py.File(self._filepath, mode="r") as f:
             labels = f[str(node)][:].flatten().tolist()
         return [label.decode() for label in labels]
 
-    def features(self, collection="processed", set_="train", visit=None, feature=None):
+    def features(
+        self,
+        collection="processed",
+        set_="train",
+        visit=None,
+        feature=None,
+        remove_nan=False,
+    ):
+        """Return tuple of arrays (time, features)"""
         node = self._root_node / collection / set_ / "sequence" / "core_array"
         self._raise_if_node_not_found(node)
         with h5py.File(self._filepath, mode="r") as f:
@@ -251,11 +264,11 @@ class HDF5Dataset:
             x = f[str(node)][visit, :, -1]  # time
             y = f[str(node)][visit, :, feature]  # values
 
-        # TODO: add this back in when using non-synthetic data.
         # Remove NaN values and samples where x and y are zero.
-        bad_indices = np.isnan(x) | np.isnan(y) | ((x == 0) & (y == 0))
-        x = x[~bad_indices].astype(float)
-        y = y[~bad_indices].astype(float)
+        if remove_nan:
+            bad_indices = np.isnan(x) | np.isnan(y) | ((x == 0) & (y == 0))
+            x = x[~bad_indices].astype(float)
+            y = y[~bad_indices].astype(float)
 
         return x.astype(float), y.astype(float)
 
@@ -263,7 +276,9 @@ class HDF5Dataset:
         """Return tuple of features, original feature IDs, and
         human-readable labels where the feature data is not 0.
         """
-        _, visit_data = self.features(visit=visit, collection=collection, set_=set_)
+        _, visit_data = self.features(
+            visit=visit, collection=collection, set_=set_, remove_nan=False
+        )
         feature_mask = visit_data.any(axis=0)
         nonzero_visit_data = visit_data[:, feature_mask]
         original_feature_ids = np.argwhere(feature_mask).flatten()
